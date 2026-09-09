@@ -1,0 +1,6 @@
+{
+  "name": "AmzData",
+  "description": "AmzData is a fully responsive, AEO, SEO, and GEO-optimized Amazon product scraping platform. Extracts full product specifications, pricing, reviews, and downloads Full HD images as ZIP archives with Python Selenium and BeautifulSoup integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
