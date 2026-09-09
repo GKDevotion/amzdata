@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>AmzData - Amazon Product & FHD Image Scraper</title>
+    <meta name="title" content="AmzData - Amazon Product & FHD Image Scraper" />
+    <meta name="description" content="Scrape Amazon product details, pricing, customer reviews, and download Full HD images as ZIP archives. Built with dynamic URL input GUI, Python BeautifulSoup and Selenium integration." />
+    <meta name="keywords" content="Amazon scraper, Amazon product scraper, download amazon images FHD zip, scrape amazon reviews, python selenium scraper, beautifulsoup amazon, Apollo Amazer 4G Life scraper, AmzData, ecommerce data extraction, amazon pricing scraper" />
+    <meta name="author" content="AmzData Engineering" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="icon" type="image/jpeg" href="/amzdata_logo.jpg" />
+    <link rel="apple-touch-icon" href="/amzdata_logo.jpg" />
+
+    <!-- GEO (Geographic & Generative Engine Optimization) Meta Tags -->
+    <meta name="geo.region" content="IN" />
+    <meta name="geo.placename" content="National / Global Amazon Marketplace" />
+    <meta name="geo.position" content="20.5937;78.9629" />
+    <meta name="ICBM" content="20.5937, 78.9629" />
+    <meta name="target" content="all" />
+    <meta name="audience" content="all" />
+    <meta name="coverage" content="Worldwide" />
+    <meta name="distribution" content="Global" />
+    <meta name="rating" content="General" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AmzData" />
+    <meta property="og:title" content="AmzData - Amazon Product & FHD Image Scraper" />
+    <meta property="og:description" content="Scrape Amazon product details, pricing, customer reviews, and download Full HD images as ZIP archives." />
+    <meta property="og:image" content="/amzdata_logo.jpg" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="1024" />
+    <meta property="og:image:alt" content="AmzData - Amazon Product Scraper and FHD Image Downloader Logo" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AmzData - Amazon Product & FHD Image Scraper" />
+    <meta name="twitter:description" content="Scrape Amazon product details, pricing, customer reviews, and download Full HD images as ZIP archives." />
+    <meta name="twitter:image" content="/amzdata_logo.jpg" />
+    <meta name="twitter:image:alt" content="AmzData Logo" />
+
+    <!-- Structured Data: JSON-LD (SoftwareApplication) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "AmzData",
+      "alternateName": "AmzData Amazon Scraper",
+      "applicationCategory": "BusinessApplication, DeveloperApplication",
+      "operatingSystem": "All modern browsers, Windows, macOS, Linux",
+      "description": "Comprehensive Amazon product extraction tool for scraping technical specifications, pricing, verified customer reviews, and downloading Full HD 1500px images as ZIP archives.",
+      "image": "/amzdata_logo.jpg",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Dynamic Amazon URL Input GUI for any product link or ASIN",
+        "1-Click Download of all product images as Full HD 1500px ZIP archive",
+        "Extracts current price, list price MRP, and discount percentages",
+        "Parses technical specifications tables and bullet point features",
+        "Customer reviews extraction with star ratings and sentiment",
+        "Executable Python Selenium and BeautifulSoup script generator",
+        "Session flush to clear and refresh scraped datasets"
+      ]
+    }
+    </script>
+
+    <!-- Structured Data: JSON-LD (FAQPage for AEO - Answer Engine Optimization) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How to scrape Amazon product details and pricing using AmzData?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Paste any dynamic Amazon product link (e.g., https://www.amazon.in/dp/B0792G6PF9) into the AmzData input bar and click 'Scrape Product'. AmzData automatically parses the product title, brand, technical specifications, current price, MRP, discount percentage, and customer reviews."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How to download all Amazon product images in Full HD as a ZIP file?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Once an Amazon product is loaded in AmzData, click the '1-Click Download All as ZIP' button in the Full HD Images tab. AmzData converts all thumbnail and medium resolution CDN tokens into master uncompressed Full HD 1500x1500px images and packages them into a single .zip file."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the Python script use Selenium and BeautifulSoup to scrape Amazon?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The included amzdata_scraper.py script initializes a Selenium Chrome WebDriver with anti-detection headers, navigates to the dynamic URL, scrolls to trigger lazy-loaded widgets, hands the DOM to BeautifulSoup4 for parsing specs and reviews, and downloads Full HD images into a ZIP archive using the requests and zipfile libraries."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I flush old data and start a fresh scraping session?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Click the 'Flush Data & Reset' button in the header or beside the URL input. This purges all previously extracted attributes, cached image blobs, and DOM elements, restoring a clean workspace for the next Amazon link."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Structured Data: JSON-LD (HowTo for AEO & Google Rich Results) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Scrape an Amazon Product and Download All Images in Full HD",
+      "description": "Step-by-step instructions to extract complete Amazon product data and download high-resolution images as a ZIP file using AmzData.",
+      "image": "/amzdata_logo.jpg",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Input Dynamic Amazon URL",
+          "text": "Paste the Amazon product URL or 10-digit ASIN into the AmzData URL input field."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Initiate Scrape",
+          "text": "Click 'Scrape Product' to extract pricing, specifications, reviews, and high-definition images."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Download FHD Images ZIP",
+          "text": "Navigate to the Full HD Images tab and click '1-Click Download All as ZIP' to save the complete image archive."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "Export Scraped Data or Run Python Script",
+          "text": "Export structured JSON/CSV data or open the Python tab to download amzdata_scraper.py."
+        }
+      ]
+    }
+    </script>
+    <script type="module" crossorigin src="/assets/index-BXUxWe2b.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B3UWXfmw.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
