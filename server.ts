@@ -6,6 +6,8 @@ import JSZip from 'jszip';
 import { createServer as createViteServer } from 'vite';
 import { scrapeAmazonProduct } from './server/scraper.ts';
 
+const currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -142,8 +144,28 @@ async function startServer() {
   // Serve public directory assets
   app.use(express.static(path.join(process.cwd(), 'public')));
 
+  // Resolve dist directory robustly across multiple deployment environments
+  function getDistPath(): string {
+    const candidates = [
+      path.join(process.cwd(), 'dist'),
+      currentDir,
+      path.join(currentDir, '..', 'dist'),
+      path.join(currentDir, 'dist'),
+      process.cwd(),
+    ];
+    for (const cand of candidates) {
+      if (fs.existsSync(path.join(cand, 'index.html')) && fs.existsSync(path.join(cand, 'assets'))) {
+        return cand;
+      }
+    }
+    return path.join(process.cwd(), 'dist');
+  }
+
+  const distPath = getDistPath();
+  const hasDist = fs.existsSync(path.join(distPath, 'index.html'));
+
   // Vite middleware for development vs static serve for production
-  const isDev = process.env.NODE_ENV === 'development' || (!process.env.NODE_ENV && !fs.existsSync(path.join(process.cwd(), 'dist', 'index.html')));
+  const isDev = process.env.NODE_ENV === 'development' || (!process.env.NODE_ENV && !hasDist);
 
   if (isDev) {
     const vite = await createViteServer({
@@ -152,10 +174,43 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    console.log(`[AmzData] Serving production static build from: ${distPath}`);
+
+    // Serve production static assets with strict MIME types and caching
+    app.use(
+      express.static(distPath, {
+        maxAge: '1y',
+        immutable: true,
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          } else if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+          } else if (filePath.endsWith('.json')) {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          } else if (filePath.endsWith('.svg')) {
+            res.setHeader('Content-Type', 'image/svg+xml');
+          }
+        },
+      })
+    );
+
+    // SPA fallback: ONLY serve index.html for non-asset routes (navigation)
+    // Never return index.html (text/html) for missing .js/.css files, which triggers the strict MIME error
+    app.get('*', (req, res, next) => {
+      if (/\.(js|mjs|css|json|map|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$/i.test(req.path)) {
+        return res.status(404).type('text/plain').send(`Asset ${req.path} not found`);
+      }
+
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        return res.sendFile(indexPath);
+      }
+      next();
     });
   }
 

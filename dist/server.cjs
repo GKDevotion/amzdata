@@ -996,6 +996,7 @@ function getApolloProductData(asin, url) {
 }
 
 // server.ts
+var currentDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
 async function startServer() {
   const app = (0, import_express.default)();
   const PORT = 3e3;
@@ -1105,7 +1106,24 @@ Generated with AmzData Scraper
     });
   });
   app.use(import_express.default.static(import_path.default.join(process.cwd(), "public")));
-  const isDev = process.env.NODE_ENV === "development" || !process.env.NODE_ENV && !import_fs.default.existsSync(import_path.default.join(process.cwd(), "dist", "index.html"));
+  function getDistPath() {
+    const candidates = [
+      import_path.default.join(process.cwd(), "dist"),
+      currentDir,
+      import_path.default.join(currentDir, "..", "dist"),
+      import_path.default.join(currentDir, "dist"),
+      process.cwd()
+    ];
+    for (const cand of candidates) {
+      if (import_fs.default.existsSync(import_path.default.join(cand, "index.html")) && import_fs.default.existsSync(import_path.default.join(cand, "assets"))) {
+        return cand;
+      }
+    }
+    return import_path.default.join(process.cwd(), "dist");
+  }
+  const distPath = getDistPath();
+  const hasDist = import_fs.default.existsSync(import_path.default.join(distPath, "index.html"));
+  const isDev = process.env.NODE_ENV === "development" || !process.env.NODE_ENV && !hasDist;
   if (isDev) {
     const vite = await (0, import_vite.createServer)({
       server: { middlewareMode: true },
@@ -1113,10 +1131,37 @@ Generated with AmzData Scraper
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = import_path.default.join(process.cwd(), "dist");
-    app.use(import_express.default.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(import_path.default.join(distPath, "index.html"));
+    console.log(`[AmzData] Serving production static build from: ${distPath}`);
+    app.use(
+      import_express.default.static(distPath, {
+        maxAge: "1y",
+        immutable: true,
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith(".js") || filePath.endsWith(".mjs")) {
+            res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+          } else if (filePath.endsWith(".css")) {
+            res.setHeader("Content-Type", "text/css; charset=utf-8");
+          } else if (filePath.endsWith(".json")) {
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+          } else if (filePath.endsWith(".svg")) {
+            res.setHeader("Content-Type", "image/svg+xml");
+          }
+        }
+      })
+    );
+    app.get("*", (req, res, next) => {
+      if (/\.(js|mjs|css|json|map|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$/i.test(req.path)) {
+        return res.status(404).type("text/plain").send(`Asset ${req.path} not found`);
+      }
+      const indexPath = import_path.default.join(distPath, "index.html");
+      if (import_fs.default.existsSync(indexPath)) {
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+        return res.sendFile(indexPath);
+      }
+      next();
     });
   }
   app.listen(PORT, "0.0.0.0", () => {
