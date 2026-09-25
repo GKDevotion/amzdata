@@ -193,33 +193,22 @@ export const ProductSummaryCard: React.FC<ProductSummaryCardProps> = ({ product,
                 )}
               </div>
 
-              {/* Key Highlights / Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                <div className="p-2.5 rounded-lg border border-stone-200 bg-white">
-                  <span className="text-[11px] text-stone-500 block">Rim Size</span>
-                  <span className="text-xs font-semibold text-stone-800">
-                    {product.specs['Rim Size'] || '14 Inches'}
-                  </span>
+              {/* Dynamic Key Specs Badges */}
+              {Object.keys(product.specs).length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+                  {Object.entries(product.specs)
+                    .filter(([k]) => !['ASIN'].includes(k))
+                    .slice(0, 4)
+                    .map(([k, v]) => (
+                      <div key={k} className="p-2.5 rounded-lg border border-stone-200 bg-white">
+                        <span className="text-[11px] text-stone-500 block truncate" title={k}>{k}</span>
+                        <span className="text-xs font-semibold text-stone-800 block truncate" title={String(v)}>
+                          {String(v)}
+                        </span>
+                      </div>
+                    ))}
                 </div>
-                <div className="p-2.5 rounded-lg border border-stone-200 bg-white">
-                  <span className="text-[11px] text-stone-500 block">Section Width</span>
-                  <span className="text-xs font-semibold text-stone-800">
-                    {product.specs['Section Width'] || '165 mm'}
-                  </span>
-                </div>
-                <div className="p-2.5 rounded-lg border border-stone-200 bg-white">
-                  <span className="text-[11px] text-stone-500 block">Speed Rating</span>
-                  <span className="text-xs font-semibold text-stone-800">
-                    {product.specs['Speed Rating'] || 'T (190 km/h)'}
-                  </span>
-                </div>
-                <div className="p-2.5 rounded-lg border border-stone-200 bg-white">
-                  <span className="text-[11px] text-stone-500 block">Construction</span>
-                  <span className="text-xs font-semibold text-stone-800">
-                    {product.specs['Construction Type'] || product.specs['Tyre Type'] || 'Radial Tubeless'}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Primary Action Button - 1 Click Download All Images FHD ZIP */}

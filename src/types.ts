@@ -67,6 +67,7 @@ export interface ProductDetails {
   description?: string;
   descriptionParagraphs?: string[];
   aplusContent?: APlusSection[];
+  aplusImages?: ProductImage[];
   importantInformation?: Record<string, string>;
   images: ProductImage[];
   reviews: CustomerReview[];

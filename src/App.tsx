@@ -5,11 +5,10 @@ import { ProductSummaryCard } from './components/ProductSummaryCard';
 import { FhdImageGallery } from './components/FhdImageGallery';
 import { SpecsAndFeatures } from './components/SpecsAndFeatures';
 import { ProductDescriptions } from './components/ProductDescriptions';
-import { CustomerReviews } from './components/CustomerReviews';
+import { AplusContentSection } from './components/AplusContentSection';
 import { ExportModal } from './components/ExportModal';
 import { DynamicJsonLd } from './components/DynamicJsonLd';
 import { AeoKnowledgeSection } from './components/AeoKnowledgeSection';
-import { SuccessCelebration } from './components/SuccessCelebration';
 import { downloadFhdImagesAsZip } from './utils/zipDownloader';
 import { extractAsinFromUrl, getDetailedFallbackProduct } from './utils/fallbackData';
 import { ProductDetails } from './types';
@@ -17,7 +16,6 @@ import {
   Image as ImageIcon,
   SlidersHorizontal,
   FileText,
-  MessageSquare,
   AlertCircle,
   Info,
   X,
@@ -35,9 +33,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'images' | 'specs' | 'descriptions' | 'reviews'>('images');
+  const [activeTab, setActiveTab] = useState<'images' | 'specs' | 'descriptions' | 'aplus'>('images');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [showSuccessEvent, setShowSuccessEvent] = useState(false);
 
   const handleScrape = async (targetUrl?: string) => {
     const queryUrl = (targetUrl || url).trim();
@@ -48,7 +45,6 @@ export default function App() {
 
     setIsLoading(true);
     setError(null);
-    setShowSuccessEvent(false);
     setLoadingStage('Connecting to Amazon Product Endpoint...');
 
     const timer1 = setTimeout(() => {
@@ -56,7 +52,7 @@ export default function App() {
     }, 700);
 
     const timer2 = setTimeout(() => {
-      setLoadingStage('Parsing Full HD master images and Customer Reviews...');
+      setLoadingStage('Parsing Full HD master images, A+ Content and Specifications...');
     }, 1400);
 
     try {
@@ -98,7 +94,6 @@ export default function App() {
 
       if (parsedData) {
         setProductData(parsedData);
-        setShowSuccessEvent(true);
         setError(null);
       } else {
         // High-fidelity fallback for any valid ASIN / Amazon URL
@@ -106,7 +101,6 @@ export default function App() {
         console.log(`[AmzData] Activating resilient catalog dataset for ASIN: ${extractedAsin}`);
         const fallback = getDetailedFallbackProduct(extractedAsin, queryUrl);
         setProductData(fallback);
-        setShowSuccessEvent(true);
         setError(
           `Notice: ${serverErrorMsg || 'Live server proxy verification active'}. Loaded verified high-fidelity catalog data for ASIN ${extractedAsin}.`
         );
@@ -119,7 +113,6 @@ export default function App() {
       const fallbackAsin = extractAsinFromUrl(queryUrl);
       const fallback = getDetailedFallbackProduct(fallbackAsin, queryUrl);
       setProductData(fallback);
-      setShowSuccessEvent(true);
       setError(`Notice: Loaded verified catalog data for ASIN ${fallbackAsin}.`);
     } finally {
       setIsLoading(false);
@@ -135,7 +128,6 @@ export default function App() {
     setProductData(null);
     setError(null);
     setUrl('');
-    setShowSuccessEvent(false);
   };
 
   const handleDownloadZip = async () => {
@@ -196,122 +188,128 @@ export default function App() {
                 <h4 className="text-sm font-semibold">Scraping Notice</h4>
                 <p className="text-xs mt-0.5">{error}</p>
               </div>
-              <button
-                onClick={() => {
-                  const sampleUrl = 'https://www.amazon.in/Apollo-Amazer-4G-LIFE-Tubeless/dp/B0792G6PF9';
-                  setUrl(sampleUrl);
-                  handleScrape(sampleUrl);
-                }}
-                className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg text-xs font-medium cursor-pointer"
-              >
-                Try Sample Apollo Tyre
-              </button>
             </div>
           )
         )}
 
         {/* Scraped Content Presentation */}
-        {productData ? (
-          <div className="space-y-6">
-            {/* Top Summary Banner with Pricing & One-Click FHD ZIP button */}
-            <ProductSummaryCard
-              product={productData}
-              onViewImagesTab={() => setActiveTab('images')}
-            />
+        {productData ? (() => {
+          const hasAplus = Boolean(
+            (productData.aplusContent && productData.aplusContent.length > 0) ||
+            (productData.aplusImages && productData.aplusImages.length > 0)
+          );
+          const aplusImagesCount =
+            (productData.aplusImages?.length || 0) +
+            (productData.aplusContent?.filter((c) => !!c.imageUrl).length || 0);
 
-            {/* Navigation Tabs - Clean, Python button hidden */}
-            <div className="border-b border-stone-200 flex items-center gap-1 sm:gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-              <button
-                onClick={() => setActiveTab('images')}
-                className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'images'
-                    ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
-                    : 'border-transparent text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <ImageIcon className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
-                <span>Full HD Images</span>
-                <span className="ml-2 px-1.5 py-0.5 rounded-full text-[11px] bg-stone-100 text-stone-700">
-                  {productData.images.length}
-                </span>
-              </button>
+          return (
+            <div className="space-y-6">
+              {/* Top Summary Banner with Pricing & One-Click FHD ZIP button */}
+              <ProductSummaryCard
+                product={productData}
+                onViewImagesTab={() => setActiveTab('images')}
+              />
 
-              <button
-                onClick={() => setActiveTab('specs')}
-                className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'specs'
-                    ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
-                    : 'border-transparent text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <SlidersHorizontal className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
-                <span>Specifications & Features</span>
-              </button>
+              {/* Navigation Tabs - Clean, Customer Reviews removed, A+ Content added when found */}
+              <div className="border-b border-stone-200 flex items-center gap-1 sm:gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('images')}
+                  className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
+                    activeTab === 'images'
+                      ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
+                      : 'border-transparent text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <ImageIcon className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
+                  <span>Full HD Images</span>
+                  <span className="ml-2 px-1.5 py-0.5 rounded-full text-[11px] bg-stone-100 text-stone-700">
+                    {productData.images.length}
+                  </span>
+                </button>
 
-              <button
-                onClick={() => setActiveTab('descriptions')}
-                className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'descriptions'
-                    ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
-                    : 'border-transparent text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <FileText className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
-                <span>Descriptions</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('specs')}
+                  className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
+                    activeTab === 'specs'
+                      ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
+                      : 'border-transparent text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
+                  <span>Specifications & Features</span>
+                </button>
 
-              <button
-                onClick={() => setActiveTab('reviews')}
-                className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'reviews'
-                    ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
-                    : 'border-transparent text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <MessageSquare className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
-                <span>Customer Reviews</span>
-                <span className="ml-2 px-1.5 py-0.5 rounded-full text-[11px] bg-stone-100 text-stone-700">
-                  {productData.reviews.length}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('descriptions')}
+                  className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
+                    activeTab === 'descriptions'
+                      ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
+                      : 'border-transparent text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <FileText className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
+                  <span>Descriptions</span>
+                </button>
+
+                {/* A+ Content Tab - conditionally shown if A+ content is found */}
+                {hasAplus && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('aplus')}
+                    className={`inline-flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
+                      activeTab === 'aplus'
+                        ? 'border-amber-600 text-amber-900 bg-white rounded-t-lg shadow-2xs'
+                        : 'border-transparent text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2 text-amber-600 shrink-0" />
+                    <span>A+ Content</span>
+                    {aplusImagesCount > 0 && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded-full text-[11px] bg-amber-100 text-amber-900 font-bold">
+                        {aplusImagesCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Tab Panes */}
+              <div>
+                {activeTab === 'images' && (
+                  <FhdImageGallery
+                    images={productData.images}
+                    asin={productData.asin}
+                    title={productData.title}
+                  />
+                )}
+
+                {activeTab === 'specs' && (
+                  <SpecsAndFeatures
+                    features={productData.features}
+                    specs={productData.specs}
+                    brand={productData.brand}
+                    model={productData.model}
+                  />
+                )}
+
+                {activeTab === 'descriptions' && (
+                  <ProductDescriptions
+                    product={productData}
+                  />
+                )}
+
+                {activeTab === 'aplus' && hasAplus && (
+                  <AplusContentSection
+                    product={productData}
+                  />
+                )}
+              </div>
             </div>
-
-            {/* Tab Panes */}
-            <div>
-              {activeTab === 'images' && (
-                <FhdImageGallery
-                  images={productData.images}
-                  asin={productData.asin}
-                  title={productData.title}
-                />
-              )}
-
-              {activeTab === 'specs' && (
-                <SpecsAndFeatures
-                  features={productData.features}
-                  specs={productData.specs}
-                  brand={productData.brand}
-                  model={productData.model}
-                />
-              )}
-
-              {activeTab === 'descriptions' && (
-                <ProductDescriptions
-                  product={productData}
-                />
-              )}
-
-              {activeTab === 'reviews' && (
-                <CustomerReviews
-                  reviews={productData.reviews}
-                  averageRating={productData.averageRating}
-                  totalRatingsCount={productData.totalRatingsCount}
-                  ratingBreakdown={productData.ratingBreakdown}
-                />
-              )}
-            </div>
-          </div>
-        ) : !isLoading ? (
+          );
+        })() : !isLoading ? (
           /* Clean, Fresh Blank State (Flushed) */
           <div className="bg-white rounded-2xl border border-stone-200 p-8 sm:p-14 text-center max-w-xl mx-auto shadow-xs">
             <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center mx-auto mb-4">
@@ -439,15 +437,6 @@ export default function App() {
           </div>
         </div>
       </footer>
-
-      {/* Animated Success Event Modal upon Process Completion */}
-      <SuccessCelebration
-        show={showSuccessEvent}
-        onClose={() => setShowSuccessEvent(false)}
-        product={productData}
-        onDownloadZip={handleDownloadZip}
-        onViewImages={() => setActiveTab('images')}
-      />
 
       {/* Export Modal */}
       <ExportModal

@@ -44,23 +44,27 @@ async function startServer() {
     }
   });
 
-  // Download all FHD images as ZIP file endpoint
+  // Download FHD or A+ images as ZIP file endpoint
   app.post(['/api/download-zip', '/api/download-zip/'], async (req, res) => {
     try {
-      const { images, asin, title } = req.body;
+      const { images, asin, title, archiveType = 'main', customFilename } = req.body;
       if (!images || !Array.isArray(images) || images.length === 0) {
         return res.status(400).json({ error: 'No images provided for download' });
       }
 
       const safeAsin = (asin || 'Amazon_Product').replace(/[^a-zA-Z0-9_-]/g, '');
-      const zip = new JSZip();
-      const folder = zip.folder(`AmzData_${safeAsin}_FHD_Images`);
+      const isAplus = archiveType === 'aplus';
+      const folderName = isAplus ? `AmzData_${safeAsin}_Aplus_Images` : `AmzData_${safeAsin}_FHD_Images`;
+      const zipFilename = customFilename || (isAplus ? `AmzData_${safeAsin}_Aplus_Images.zip` : `AmzData_${safeAsin}_FHD_Images.zip`);
 
-      console.log(`[AmzData API] Building FHD ZIP for ASIN ${safeAsin} with ${images.length} images...`);
+      const zip = new JSZip();
+      const folder = zip.folder(folderName);
+
+      console.log(`[AmzData API] Building ${isAplus ? 'A+ Content' : 'FHD'} ZIP for ASIN ${safeAsin} with ${images.length} images...`);
 
       // Fetch images in parallel with timeout
-      const downloadPromises = images.map(async (img: { fhdUrl?: string; thumbUrl?: string; label?: string; id?: string }, idx: number) => {
-        const targetUrl = img.fhdUrl || img.thumbUrl;
+      const downloadPromises = images.map(async (img: { fhdUrl?: string; thumbUrl?: string; originalUrl?: string; label?: string; id?: string }, idx: number) => {
+        const targetUrl = img.fhdUrl || img.originalUrl || img.thumbUrl;
         if (!targetUrl) return;
 
         try {
@@ -73,8 +77,10 @@ async function startServer() {
             },
           });
 
-          const ext = path.extname(new URL(targetUrl).pathname) || '.jpg';
-          const filename = `${safeAsin}_FHD_${String(idx + 1).padStart(2, '0')}${ext}`;
+          let ext = path.extname(new URL(targetUrl).pathname) || '.jpg';
+          if (!ext || ext.length > 5 || ext === '.') ext = '.jpg';
+          const prefix = isAplus ? 'Aplus' : 'FHD';
+          const filename = `${safeAsin}_${prefix}_${String(idx + 1).padStart(2, '0')}${ext}`;
           if (folder) {
             folder.file(filename, resp.data);
           }
@@ -89,19 +95,20 @@ async function startServer() {
       if (folder) {
         folder.file(
           'README.txt',
-          `AmzData - High Definition Amazon Product Images\n` +
+          `AmzData - Amazon Product Images Archive\n` +
+          `Archive Type: ${isAplus ? 'A+ Enhanced Brand Content Images' : 'Full HD Product Master Images'}\n` +
           `ASIN: ${safeAsin}\n` +
           `Product: ${title || 'Amazon Product'}\n` +
           `Downloaded: ${new Date().toUTCString()}\n` +
-          `Image Quality: Full High Definition (1500px master resolution)\n` +
-          `Generated with AmzData Python / Web Scraper\n`
+          `Total Images: ${images.length}\n` +
+          `Generated with AmzData Scraper\n`
         );
       }
 
       const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
       res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', `attachment; filename="AmzData_${safeAsin}_FHD_Images.zip"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
       res.setHeader('Content-Length', zipBuffer.length);
       return res.send(zipBuffer);
     } catch (err: any) {
