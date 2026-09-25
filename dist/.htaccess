@@ -1,0 +1,49 @@
+# Apache & LiteSpeed configuration for React SPA deployment
+# Ensures JavaScript modules and stylesheets have strict proper MIME types
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType application/javascript .mjs
+  AddType text/css .css
+  AddType image/svg+xml .svg
+  AddType application/json .json
+  AddType font/woff2 .woff2
+</IfModule>
+
+# Disable caching for index.html so the browser always loads the newest hashed asset bundles
+<Files "index.html">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </IfModule>
+</Files>
+
+# Long-term cache for hashed static asset bundles
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
+
+# SPA URL Rewrite rules
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. If requested resource exists as a real file or folder, serve it directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 2. Never rewrite missing static assets (.js, .css, .png, etc.) to index.html
+  # This prevents the "MIME type of text/html instead of javascript" browser error
+  RewriteCond %{REQUEST_URI} \.(js|mjs|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|map|json)$ [NC]
+  RewriteRule ^ - [R=404,L]
+
+  # 3. Rewrite all remaining client-side routes to index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
